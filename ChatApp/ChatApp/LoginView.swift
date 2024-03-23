@@ -10,19 +10,7 @@ import Firebase
 import FirebaseStorage
 import FirebaseFirestore
 
-class FirebaseManager:NSObject{
-    let auth:Auth
-    let storage:Storage
-    let firestore:Firestore
-    static let shared=FirebaseManager()
-    override init(){
-        FirebaseApp.configure()
-        self.auth=Auth.auth()
-        self.storage=Storage.storage()
-        self.firestore=Firestore.firestore()
-        super.init()
-    }
-}
+
 struct LoginView: View {
     @State var email:String = ""
     @State var password:String = ""
@@ -116,45 +104,74 @@ struct LoginView: View {
         
     }
     
-    private func persistImageToStorage(){
-        let filename=UUID().uuidString
-        guard let uid=FirebaseManager.shared.auth.currentUser?.uid
-        else{return}
-        guard let imageData=self.image?.jpegData(compressionQuality: 0.5)
-        else {return}
-        let ref = FirebaseManager.shared.storage.reference(withPath:uid)
-        ref.putData(imageData, metadata: nil)
-        {metadata,err in
-            if let err=err{
-                self.loginMessage="Failed to push image to Storage:\(err)"
-                return
-            }
+    private func persistImageToStorage() {
+        guard let uid = FirebaseManager.shared.auth.currentUser?.uid else {
+            self.loginMessage = "Failed to retrieve user UID"
+            return
         }
-        ref.downloadURL{ url,err in
-            if let err = err {
-                self.loginMessage="failed to retrieve downloadURL"
+        
+        guard let imageData = self.image?.jpegData(compressionQuality: 0.5) else {
+            self.loginMessage = "Failed to convert image to data"
+            return
+        }
+        
+        let storageRef = FirebaseManager.shared.storage.reference().child("profile_images").child(uid).child(UUID().uuidString + ".jpg")
+        
+        storageRef.putData(imageData, metadata: nil) { metadata, error in
+            guard metadata != nil else {
+                if let error = error {
+                    self.loginMessage = "Failed to upload image to Storage: \(error.localizedDescription)"
+                } else {
+                    self.loginMessage = "Failed to upload image to Storage"
+                }
                 return
             }
-            self.loginMessage="successfully stored image with url:\(url?.absoluteString ?? "")"
-            print(url?.absoluteString ?? "")
-            guard let url=url else{return}
-            self.storeUserInformation(imageProfileUrl:url)
+            
+            storageRef.downloadURL { url, error in
+                if let error = error {
+                    self.loginMessage = "Failed to retrieve download URL: \(error.localizedDescription)"
+                    return
+                }
+                
+                guard let downloadURL = url else {
+                    self.loginMessage = "Download URL is nil"
+                    return
+                }
+                
+                self.loginMessage = "Image uploaded successfully. URL: \(downloadURL)"
+                
+            
+                self.storeUserInformation(imageProfileUrl: downloadURL)
+            }
         }
     }
 
 
-        private func storeUserInformation(imageProfileUrl:URL?){
-            guard let uid = FirebaseManager.shared.auth.currentUser?.uid else{return}
-            let userData=["email":self.email,"uid":uid,"profileImageUrl":imageProfileUrl?.absoluteString]
-            FirebaseManager.shared.firestore.document(uid).setData(userData){err in
-                if let err=err{
-                    print(err)
-                    self.loginMessage="\(err)"
-                    return
-                }
-              print(loginMessage)
+    private func storeUserInformation(imageProfileUrl: URL?) {
+        guard let uid = FirebaseManager.shared.auth.currentUser?.uid else {
+            print("Current user UID is nil")
+            self.loginMessage = "Current user UID is nil"
+            return
+        }
+        
+        let userRef = FirebaseManager.shared.firestore.collection("users").document(uid)
+        
+        let userData: [String: Any] = [
+            "email": self.email,
+            "profileImageUrl": imageProfileUrl?.absoluteString ?? ""
+        ]
+        
+        userRef.setData(userData) { error in
+            if let error = error {
+                print("Error storing user information: \(error.localizedDescription)")
+                self.loginMessage = "Error storing user information: \(error.localizedDescription)"
+            } else {
+                print("User information stored successfully")
+                self.loginMessage = "User information stored successfully"
             }
         }
+    }
+
     }
 
 
