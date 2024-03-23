@@ -10,7 +10,19 @@ import Firebase
 import FirebaseStorage
 import FirebaseFirestore
 
-
+class FirebaseManager:NSObject{
+    let auth:Auth
+    let storage:Storage
+    let firestore:Firestore
+    static let shared=FirebaseManager()
+    override init(){
+        FirebaseApp.configure()
+        self.auth=Auth.auth()
+        self.storage=Storage.storage()
+        self.firestore=Firestore.firestore()
+        super.init()
+    }
+}
 struct LoginView: View {
     @State var email:String = ""
     @State var password:String = ""
@@ -68,17 +80,18 @@ struct LoginView: View {
     private func handleAction(){
         if isLoginMode{
             print("login with existing creadentials on firebase")
-            
-                 loginUser()
-            
+            Task{
+                await loginUser()
+            }
         }
         else{
-                 createNewAccount()
-            
+            Task{
+                await createNewAccount()
+            }
             print("create new account")
         }
     }
-    private func createNewAccount(){
+    private func createNewAccount()async{
         FirebaseManager.shared.auth.createUser(withEmail: email, password: password){result,error in
             if let err = error{
                 self.loginMessage="Failed to create user\(err)"
@@ -92,10 +105,10 @@ struct LoginView: View {
         
     }
     
-    private func loginUser(){
+    private func loginUser()async{
         FirebaseManager.shared.auth.signIn(withEmail: email, password: password){result,error in
             if let err = error{
-                self.loginMessage="Failed to login as user\(err)"
+                self.loginMessage="Failed to create user\(err)"
                 return
             }
             self.loginMessage="Successfully logged in as user:\(result?.user.uid ?? "")"
@@ -118,7 +131,7 @@ struct LoginView: View {
             }
         }
         ref.downloadURL{ url,err in
-            if let _ = err {
+            if let err = err {
                 self.loginMessage="failed to retrieve downloadURL"
                 return
             }
@@ -133,7 +146,7 @@ struct LoginView: View {
         private func storeUserInformation(imageProfileUrl:URL?){
             guard let uid = FirebaseManager.shared.auth.currentUser?.uid else{return}
             let userData=["email":self.email,"uid":uid,"profileImageUrl":imageProfileUrl?.absoluteString]
-            FirebaseManager.shared.firestore.document(uid).setData(userData as [String : Any]){err in
+            FirebaseManager.shared.firestore.document(uid).setData(userData){err in
                 if let err=err{
                     print(err)
                     self.loginMessage="\(err)"
