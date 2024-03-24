@@ -70,17 +70,21 @@ struct LoginView: View {
         if isLoginMode{
             print("login with existing creadentials on firebase")
             Task{
-                await loginUser()
+                 loginUser()
             }
         }
         else{
             Task{
-                await createNewAccount()
+                 createNewAccount()
             }
             print("create new account")
         }
     }
-    private func createNewAccount()async{
+    private func createNewAccount(){
+        if self.image==nil{
+            self.loginMessage="you must select a profile picture"
+            return
+        }
         FirebaseManager.shared.auth.createUser(withEmail: email, password: password){result,error in
             if let err = error{
                 self.loginMessage="Failed to create user\(err)"
@@ -94,7 +98,7 @@ struct LoginView: View {
         
     }
     
-    private func loginUser()async{
+    private func loginUser(){
         FirebaseManager.shared.auth.signIn(withEmail: email, password: password){result,error in
             if let err = error{
                 self.loginMessage="Failed to create user\(err)"
@@ -172,6 +176,7 @@ struct LoginView: View {
                 self.loginMessage = "User information stored successfully"
             }
         }
+        self.didCompleteLoginProcess()
     }
 
     }
