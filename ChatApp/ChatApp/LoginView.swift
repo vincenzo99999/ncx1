@@ -12,12 +12,13 @@ import FirebaseFirestore
 
 
 struct LoginView: View {
-    @State var email:String = ""
-    @State var password:String = ""
-    @State var isLoginMode = false
-    @State var loginMessage: String = ""
-    @State var shouldShowImagePicker=false
-    @State var image : UIImage?
+    let didCompleteLoginProcess:()->()
+    @State private var email:String = ""
+    @State private var password:String = ""
+    @State private var isLoginMode = false
+    @State private var loginMessage: String = ""
+    @State private var shouldShowImagePicker=false
+    @State private var image : UIImage?
     var body: some View {
         VStack(spacing:12){
             NavigationView{
@@ -100,6 +101,7 @@ struct LoginView: View {
                 return
             }
             self.loginMessage="Successfully logged in as user:\(result?.user.uid ?? "")"
+            self.didCompleteLoginProcess()
         }
         
     }
@@ -176,5 +178,7 @@ struct LoginView: View {
 
 
 #Preview {
-    LoginView()
+    LoginView(didCompleteLoginProcess: {
+        
+    })
 }

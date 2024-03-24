@@ -70,11 +70,19 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		54AC33102BACB798007429E7 = {
+		549CF9272BB09C6E002FBF7C /* utils */ = {
 			isa = PBXGroup;
 			children = (
 				543572492BAF579C003BF1A5 /* FirebaseManager.swift */,
 				5435724B2BAF58B5003BF1A5 /* ChatUser.swift */,
+			);
+			path = utils;
+			sourceTree = "<group>";
+		};
+		54AC33102BACB798007429E7 = {
+			isa = PBXGroup;
+			children = (
+				549CF9272BB09C6E002FBF7C /* utils */,
 				54BBC7722BADA30F00091E40 /* MainMessages */,
 				54AC331B2BACB798007429E7 /* ChatApp */,
 				54AC331A2BACB798007429E7 /* Products */,
