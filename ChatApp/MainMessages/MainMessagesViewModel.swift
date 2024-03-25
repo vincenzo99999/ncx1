@@ -10,6 +10,12 @@ import Foundation
 class MainMessageViewModel:ObservableObject{
     @Published var errorMessage:String = ""
     @Published var chatUser:ChatUser?
+    @Published var isUserLoggedOut=false
+    
+    func handleSignOut(){
+        isUserLoggedOut.toggle()
+        try? FirebaseManager.shared.auth.signOut()
+    }
     
     init(){
         DispatchQueue.main.async{
@@ -44,10 +50,5 @@ class MainMessageViewModel:ObservableObject{
             self.chatUser = .init(data: data)
         }
     }
-    @Published var isUserLoggedOut=false
-    func handleSignOut(){
-        isUserLoggedOut.toggle()
-        try? FirebaseManager.shared.auth.signOut()
-    }
-    
+   
 }

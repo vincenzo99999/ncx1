@@ -121,5 +121,5 @@ struct MainMessagesView:View {
 }
 
 #Preview {
-    MainMessagesView().preferredColorScheme(.dark)
+    MainMessagesView()
 }
