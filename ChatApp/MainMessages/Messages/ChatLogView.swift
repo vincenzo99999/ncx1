@@ -27,12 +27,12 @@ struct ChatLogView:View{
             }
         }
     }
-        private var chatBottomBar:some View{
-            VStack{
+    private var chatBottomBar:some View{
+        VStack{
             HStack(spacing:16){
                 Image(systemName: "photo.on.rectangle").font(.system(size: 24)).foregroundColor(Color(.darkGray))
                 //use a textEditor instead
-                TextField("Message", text: $isChatFocused)
+                TextField("Message", text: $vm.chatText)
                 Button{
                     vm.handleSend()
                 } label:{
@@ -44,39 +44,56 @@ struct ChatLogView:View{
             }.padding(.horizontal)
                 .padding(.vertical,8)
         }
-        }
+    }
     private var messagesView:some View{
         VStack{
-            ScrollView{
-                ScrollView {
-                    ForEach(0..<20)
-                    { num in
-                        HStack {
-                            Spacer ()
-                            HStack {
-                                Text ("FAKE MESSAGE FOR NOW")
-                                    .foregroundColor(.white)
+            
+            ScrollView {
+                ForEach(vm.chatMessages)
+                { message in
+                    VStack{
+                        if message.fromId==FirebaseManager.shared.auth.currentUser?.uid{
+                            
+                            HStack
+                            {
+                                Spacer ()
+                                HStack {
+                                    Text (message.text)
+                                        .foregroundColor(.white)
+                                        .padding()
+                                        .background (Color.blue)
+                                        .cornerRadius (8)
+                                }
                             }
-                            .padding()
-                            .background (Color.blue)
-                            .cornerRadius (8)
+                        }else {
+                            HStack {
+                                HStack {
+                                    Text (message.text)
+                                        .foregroundColor(.black)
+                                }
+                                .padding()
+                                .background(Color(.lightGray))
+                                .cornerRadius(8)
+                                Spacer ()
+                            }
                             .padding(.horizontal)
-                            .padding (.top, 8)
+                            .padding(.top,8)
                         }
                         HStack{ Spacer ()}
-                    }.background(Color(.init(white:0.95,alpha: 1)))
+                    }.background(Color.white)
                         .navigationTitle(chatUser?.email ?? "")
                         .navigationBarTitleDisplayMode(.inline)
                 }.padding(.bottom,65)
+                
+                
+                
             }
-            
-            
         }
     }
 }
 
 #Preview {
     NavigationView{
-        ChatLogView(chatUser: .init(data: ["uid":"real user id","email":"vincenzo@gmail.com"]))
+        ChatLogView(chatUser: .init(data: ["uid":"HHD5PiaPdfZ3IMZUcVRRg1RPghB2","email":"vincenzo5@gmail.com"]))
     }
 }

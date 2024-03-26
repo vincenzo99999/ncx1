@@ -2,53 +2,62 @@ import Foundation
 import SwiftUI
 import Firebase
 
+
 class ChatLogViewModel: ObservableObject {
     let chatUser: ChatUser?
     @Published var errorMessage: String = ""
     @Published var chatText: String = ""
-
+    @Published var chatMessages=[ChatMessage]()
     init(chatUser: ChatUser?) {
         self.chatUser = chatUser
+        fetchMessages()
     }
-    
-    func handleSend() {
-        print(chatText)
-        
-        guard let fromId = FirebaseManager.shared.auth.currentUser?.uid else {
-            self.errorMessage = "Couldn't load current user"
-            return
-        }
-        print(fromId)
-        
-        guard let toId = chatUser?.uid else {
-            self.errorMessage = "Couldn't retrieve the user ID"
-            return
-        }
-        print(toId)
-
-        let collectionPath = "messages/\(fromId)_to_\(toId)"
-
-        let documentRef = FirebaseManager.shared.firestore.collection(collectionPath).document()
-
-        let messageData: [String: Any] = [
-            "fromId": fromId,
-            "toId": toId,
-            "text": self.chatText,
-            "timestamp": Timestamp()
-        ]
-
-        documentRef.setData(messageData) { error in
+    private func fetchMessages(){
+        guard let fromId=FirebaseManager.shared.auth.currentUser?.uid else{return}
+        guard let toId = chatUser?.uid else {return}
+        FirebaseManager.shared.firestore.collection("messages").document(fromId).collection(toId).order(by: "timestamp").addSnapshotListener {querySnapshot, error in
             if let error = error {
-                print("Error saving message to Firestore: \(error)")
-                self.errorMessage = "Failed to save message into Firestore: \(error.localizedDescription)"
-            } else {
-                print("Message saved successfully")
-                // Optionally, clear chat text after sending
-                self.chatText = ""
+                self.errorMessage="Failed to listen for messages:\(error) "
+                print(error)
+                return
+            }
+            querySnapshot?.documentChanges.forEach({ change in
+                if change.type == .added {
+                    let data = change.document.data()
+                    self.chatMessages.append(.init(documentId:change.document.documentID, data: data))
+                }
+            })
             }
         }
+    func handleSend(){
+        
+        guard let fromId=FirebaseManager.shared.auth.currentUser?.uid else {return}
+        
+        guard let toId=chatUser?.uid else {return}
+        let document = FirebaseManager.shared.firestore.collection("messages")
+            .document(fromId).collection(toId).document()
+        let messageData = [FirebaseConstants.fromId:fromId,FirebaseConstants.toId:toId,FirebaseConstants.text:
+                            self.chatText,"timestamp":Timestamp()] as [String:Any]
+        document.setData(messageData){error in
+            if let error=error{
+                self.errorMessage="failed to save in firestore \(error)"
+                return
+            }
+            
+        }
+        let recipientMessageDocument = FirebaseManager.shared.firestore.collection("messages")
+            .document(toId).collection(fromId).document()
+        recipientMessageDocument.setData(messageData){error in
+            if let error=error{
+                self.errorMessage="failed to save message into firestore: \(error)"
+                return
+            }
+        }
+        self.chatText=""
     }
-
-
-
+    
 }
+
+
+
+

@@ -15,14 +15,17 @@ class MainMessageViewModel:ObservableObject{
     func handleSignOut(){
         isUserLoggedOut.toggle()
         try? FirebaseManager.shared.auth.signOut()
+        
     }
     
     init(){
         DispatchQueue.main.async{
             self.isUserLoggedOut = FirebaseManager.shared.auth.currentUser?.uid == nil
+            if self.isUserLoggedOut == false{
+                self.fetchCurrentUser()
+            }
+            print(self.isUserLoggedOut)
         }
-            fetchCurrentUser()
-            
     }
     
      func fetchCurrentUser(){

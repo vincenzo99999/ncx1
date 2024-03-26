@@ -115,6 +115,7 @@ struct LoginView: View {
             self.loginMessage = "Failed to retrieve user UID"
             return
         }
+        print(uid)
         
         guard let imageData = self.image?.jpegData(compressionQuality: 0.5) else {
             self.loginMessage = "Failed to convert image to data"
@@ -146,9 +147,10 @@ struct LoginView: View {
                 
                 self.loginMessage = "Image uploaded successfully. URL: \(downloadURL)"
                 
-            
+                
                 self.storeUserInformation(imageProfileUrl: downloadURL)
             }
+            
         }
     }
 
@@ -164,7 +166,8 @@ struct LoginView: View {
         
         let userData: [String: Any] = [
             "email": self.email,
-            "profileImageUrl": imageProfileUrl?.absoluteString ?? ""
+            "profileImageUrl": imageProfileUrl?.absoluteString ?? "",
+            "uid":uid
         ]
         
         userRef.setData(userData) { error in

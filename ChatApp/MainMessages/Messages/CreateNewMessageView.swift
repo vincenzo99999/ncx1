@@ -14,6 +14,7 @@ struct CreateNewMessageView:View{
     let didSelectNewUser: (ChatUser)->()
     var body:some View{
         NavigationView{
+            
             ScrollView{
                 ForEach(vm.users,id: \.id){ user in
                     HStack{
@@ -22,7 +23,9 @@ struct CreateNewMessageView:View{
                             didSelectNewUser(user)
                                 } label:{
                             WebImage(url: URL(string: user.profileImageUrl)).resizable().scaledToFill().frame(width:50,height: 50).clipped().cornerRadius(50).overlay(RoundedRectangle(cornerRadius: 50).stroke(Color(.label),lineWidth: 2))
+                        
                             Text(user.email).foregroundColor(Color(.label))
+                         
                         }
                         Spacer()
                     }.padding(.horizontal)
