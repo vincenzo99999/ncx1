@@ -10,8 +10,8 @@ import Foundation
 class MainMessageViewModel:ObservableObject{
     @Published var errorMessage:String = ""
     @Published var chatUser:ChatUser?
-    @Published var isUserLoggedOut=false
-    
+    @Published var isUserLoggedOut=true
+    @Published var recentMessages = [RecentMessage]()
     func handleSignOut(){
         isUserLoggedOut.toggle()
         try? FirebaseManager.shared.auth.signOut()
@@ -21,10 +21,30 @@ class MainMessageViewModel:ObservableObject{
     init(){
         DispatchQueue.main.async{
             self.isUserLoggedOut = FirebaseManager.shared.auth.currentUser?.uid == nil
-            if self.isUserLoggedOut == false{
-                self.fetchCurrentUser()
-            }
             print(self.isUserLoggedOut)
+        }
+        self.fetchCurrentUser()
+        self.fetchRecentMessages()
+    }
+    private func fetchRecentMessages(){
+        guard let uid = FirebaseManager.shared.auth.currentUser?.uid else{return}
+        FirebaseManager.shared.firestore.collection("recent_messages").document(uid).collection("messages").order(by: "timestamp").addSnapshotListener { querySnapshot, error in
+            if let error=error{
+                self.errorMessage="failed to listen to changes:\(error)"
+                print(error)
+                return
+            }
+            querySnapshot?.documentChanges.forEach({change in
+                
+                    let docId=change.document.documentID
+                if let index = self.recentMessages.firstIndex(where:{rm in
+                    return rm.documentId==docId
+                }) {
+                    self.recentMessages.remove(at: index)
+                }
+                    self.recentMessages.insert(.init(documentId:docId,data: change.document.data()),at: 0)
+                
+            })
         }
     }
     
