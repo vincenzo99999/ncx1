@@ -81,7 +81,7 @@ class ChatLogViewModel: ObservableObject {
             FirebaseConstants.profileImageUrl:chatUser?.profileImageUrl ?? "" ,
             FirebaseConstants.email:chatUser?.email ?? ""
         ]
-        let recipientDocument = FirebaseManager.shared.firestore.collection("users").document(toId)
+        let recipientDocument = FirebaseManager.shared.firestore.collection("recent_messages").document(toId).collection("messages").document(fromId)
         
         let recipientData: [String: Any] = [
             FirebaseConstants.timestamp:Timestamp(),
@@ -108,7 +108,3 @@ class ChatLogViewModel: ObservableObject {
     }
     
 }
-
-
-
-
